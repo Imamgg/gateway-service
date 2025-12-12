@@ -1,46 +1,46 @@
-import { Controller, All, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
-import { ProxyService } from './proxy.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Controller, All, Req, UseGuards } from "@nestjs/common";
+import { Request } from "express";
+import { ProxyService } from "./proxy.service";
+import { JwtAuthGuard } from "./auth/guards/jwt-auth.guard";
 
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class ProxyController {
   constructor(private proxyService: ProxyService) {}
 
-  @All('api/students/*')
+  @All("api/students/*")
   async proxyStudents(@Req() req: Request) {
-    const path = req.url.replace('/api/students', '');
+    const path = req.url.replace("/api/students", "");
     return this.proxyService.forwardRequest(
-      'student',
+      "student",
       `/api/students${path}`,
       req.method,
       req.body,
-      req.headers,
+      req.headers
     );
   }
 
-  @All('api/courses/*')
+  @All("api/courses/*")
   async proxyCourses(@Req() req: Request) {
-    const path = req.url.replace('/api/courses', '');
+    const path = req.url.replace("/api/courses", "");
     return this.proxyService.forwardRequest(
-      'course',
+      "course",
       `/api/courses${path}`,
       req.method,
       req.body,
-      req.headers,
+      req.headers
     );
   }
 
-  @All('api/grades/*')
+  @All("api/grades/*")
   async proxyGrades(@Req() req: Request) {
-    const path = req.url.replace('/api/grades', '');
+    const path = req.url.replace("/api/grades", "");
     return this.proxyService.forwardRequest(
-      'grades',
+      "grades",
       `/api/grades${path}`,
       req.method,
       req.body,
-      req.headers,
+      req.headers
     );
   }
 }

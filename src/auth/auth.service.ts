@@ -18,13 +18,13 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     
     const user = this.userRepository.create({
-      ...registerDto,
+      ..registerDto,
       password: hashedPassword,
     });
 
     await this.userRepository.save(user);
 
-    const { password, ...result } = user;
+    const { password, ..result } = user;
     return result;
   }
 
