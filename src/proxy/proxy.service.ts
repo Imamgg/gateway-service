@@ -40,7 +40,10 @@ export class ProxyService {
           headers: {
             ...headers,
             host: undefined, // Remove host header to prevent conflicts
+            "if-none-match": undefined, // Remove ETag caching headers
+            "if-modified-since": undefined,
           },
+          validateStatus: (status) => status >= 200 && status < 500, // Accept 2xx, 3xx, 4xx
         })
       );
       return response.data;
