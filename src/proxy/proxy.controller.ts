@@ -1,7 +1,7 @@
 import { Controller, All, Req, UseGuards } from "@nestjs/common";
 import { Request } from "express";
 import { ProxyService } from "./proxy.service";
-import { JwtAuthGuard } from "./auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller()
 @UseGuards(JwtAuthGuard)
