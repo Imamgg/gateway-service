@@ -1,4 +1,13 @@
-import { Controller, All, Req, UseGuards, Get, Post, Patch, Delete } from "@nestjs/common";
+import {
+  Controller,
+  All,
+  Req,
+  UseGuards,
+  Get,
+  Post,
+  Patch,
+  Delete,
+} from "@nestjs/common";
 import { Request } from "express";
 import { ProxyService } from "./proxy.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -10,13 +19,25 @@ import { Roles } from "../auth/decorators/roles.decorator";
 export class ProxyController {
   constructor(private proxyService: ProxyService) {}
 
-  // Students routes - Admin and Lecturer can view, only Admin can modify
+  // ---------- Helper ----------
+  private buildForwardPath(req: Request, prefix: string) {
+    // req.originalUrl preserves path + query (Express)
+    // remove the prefix (e.g. /api/students) and return the remainder (may be "" or "/:id?query")
+    const original = req.originalUrl || req.url;
+    if (!original.startsWith(prefix)) return original;
+    const remainder = original.slice(prefix.length); // keeps leading '/' if present
+    // If remainder is empty, return prefix base (so microservice sees /api/students or /api/courses)
+    return prefix + (remainder || "");
+  }
+
+  // ---------- STUDENTS ----------
   @Get("api/students")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyStudentsBaseGet(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/students");
     return this.proxyService.forwardRequest(
       "student",
-      `/api/students${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -24,11 +45,12 @@ export class ProxyController {
   }
 
   @Post("api/students")
-  @Roles('admin')
+  @Roles("admin")
   async proxyStudentsBasePost(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/students");
     return this.proxyService.forwardRequest(
       "student",
-      `/api/students${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -36,12 +58,12 @@ export class ProxyController {
   }
 
   @Get("api/students/*")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyStudentsGet(@Req() req: Request) {
-    const path = req.url.replace("/api/students", "");
+    const path = this.buildForwardPath(req, "/api/students");
     return this.proxyService.forwardRequest(
       "student",
-      `/api/students${path}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -49,12 +71,12 @@ export class ProxyController {
   }
 
   @Patch("api/students/*")
-  @Roles('admin')
+  @Roles("admin")
   async proxyStudentsPatch(@Req() req: Request) {
-    const path = req.url.replace("/api/students", "");
+    const path = this.buildForwardPath(req, "/api/students");
     return this.proxyService.forwardRequest(
       "student",
-      `/api/students${path}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -62,36 +84,26 @@ export class ProxyController {
   }
 
   @Delete("api/students/*")
-  @Roles('admin')
+  @Roles("admin")
   async proxyStudentsDelete(@Req() req: Request) {
-    const path = req.url.replace("/api/students", "");
+    const path = this.buildForwardPath(req, "/api/students");
     return this.proxyService.forwardRequest(
       "student",
-      `/api/students${path}`,
+      path,
       req.method,
       req.body,
       req.headers
     );
   }
 
-  // Courses routes - All authenticated users can view
-    const path = req.url.replace("/api/students", "");
-    return this.proxyService.forwardRequest(
-      "student",
-      `/api/students${path}`,
-      req.method,
-      req.body,
-      req.headers
-    );
-  }
-
-  // Courses routes - All authenticated users can view
+  // ---------- COURSES ----------
   @Get("api/courses")
-  @Roles('admin', 'lecturer', 'student')
+  @Roles("admin", "lecturer", "student")
   async proxyCoursesBaseGet(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/courses");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/courses${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -99,11 +111,12 @@ export class ProxyController {
   }
 
   @Post("api/courses")
-  @Roles('admin')
+  @Roles("admin")
   async proxyCoursesBasePost(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/courses");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/courses${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -111,12 +124,12 @@ export class ProxyController {
   }
 
   @Get("api/courses/*")
-  @Roles('admin', 'lecturer', 'student')
+  @Roles("admin", "lecturer", "student")
   async proxyCoursesGet(@Req() req: Request) {
-    const path = req.url.replace("/api/courses", "");
+    const path = this.buildForwardPath(req, "/api/courses");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/courses${path}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -124,12 +137,12 @@ export class ProxyController {
   }
 
   @Patch("api/courses/*")
-  @Roles('admin')
+  @Roles("admin")
   async proxyCoursesPatch(@Req() req: Request) {
-    const path = req.url.replace("/api/courses", "");
+    const path = this.buildForwardPath(req, "/api/courses");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/courses${path}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -137,24 +150,26 @@ export class ProxyController {
   }
 
   @Delete("api/courses/*")
-  @Roles('admin')
+  @Roles("admin")
   async proxyCoursesDelete(@Req() req: Request) {
-    const path = req.url.replace("/api/courses", "");
+    const path = this.buildForwardPath(req, "/api/courses");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/courses${path}`,
+      path,
       req.method,
       req.body,
       req.headers
     );
   }
 
-  // Enrollments routes - Students can enroll, Admin and Lecturer can view all
+  // ---------- ENROLLMENTS ----------
   @Get("api/enrollments")
+  @Roles("admin", "lecturer", "student")
   async proxyEnrollmentsBase(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/enrollments");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/enrollments${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -162,24 +177,26 @@ export class ProxyController {
   }
 
   @All("api/enrollments/*")
+  @Roles("admin", "lecturer", "student")
   async proxyEnrollments(@Req() req: Request) {
-    const path = req.url.replace("/api/enrollments", "");
+    const path = this.buildForwardPath(req, "/api/enrollments");
     return this.proxyService.forwardRequest(
       "course",
-      `/api/enrollments${path}`,
+      path,
       req.method,
       req.body,
       req.headers
     );
   }
 
-  // Grades routes
+  // ---------- GRADES ----------
   @Get("api/grades")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyGradesBaseGet(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      `/api/grades${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -187,11 +204,12 @@ export class ProxyController {
   }
 
   @Post("api/grades")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyGradesBasePost(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      `/api/grades${req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : ""}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -199,11 +217,12 @@ export class ProxyController {
   }
 
   @Get("api/grades/student/*/transcript")
-  @Roles('admin', 'lecturer', 'student')
+  @Roles("admin", "lecturer", "student")
   async proxyGradesTranscript(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      req.url,
+      req.originalUrl,
       req.method,
       req.body,
       req.headers
@@ -211,11 +230,11 @@ export class ProxyController {
   }
 
   @Get("api/grades/student/*/gpa")
-  @Roles('admin', 'lecturer', 'student')
+  @Roles("admin", "lecturer", "student")
   async proxyGradesGpa(@Req() req: Request) {
     return this.proxyService.forwardRequest(
       "grades",
-      req.url,
+      req.originalUrl,
       req.method,
       req.body,
       req.headers
@@ -223,12 +242,12 @@ export class ProxyController {
   }
 
   @Get("api/grades/*")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyGradesGet(@Req() req: Request) {
-    const path = req.url.replace("/api/grades", "");
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      `/api/grades${path}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -236,12 +255,12 @@ export class ProxyController {
   }
 
   @Patch("api/grades/*")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyGradesPatch(@Req() req: Request) {
-    const path = req.url.replace("/api/grades", "");
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      `/api/grades${path}`,
+      path,
       req.method,
       req.body,
       req.headers
@@ -249,11 +268,12 @@ export class ProxyController {
   }
 
   @Post("api/grades/*/finalize")
-  @Roles('admin', 'lecturer')
+  @Roles("admin", "lecturer")
   async proxyGradesFinalize(@Req() req: Request) {
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      req.url,
+      req.originalUrl,
       req.method,
       req.body,
       req.headers
@@ -261,12 +281,12 @@ export class ProxyController {
   }
 
   @Delete("api/grades/*")
-  @Roles('admin')
+  @Roles("admin")
   async proxyGradesDelete(@Req() req: Request) {
-    const path = req.url.replace("/api/grades", "");
+    const path = this.buildForwardPath(req, "/api/grades");
     return this.proxyService.forwardRequest(
       "grades",
-      `/api/grades${path}`,
+      path,
       req.method,
       req.body,
       req.headers
